@@ -959,7 +959,7 @@ function renderCitasClinica(citas, titulo) {
             (c.services ? '<span class="text-xs text-sky-500 font-medium">' + c.services.name + '</span>' : '') +
           '</div>' +
           '<p class="text-sm text-gray-500 mt-1">📅 ' + formatFecha(c.scheduled_at) + '</p>' +
-          '<p class="text-sm text-gray-500">👤 ' + (c.owner_name || 'Propietario no especificado') + '</p>' +
+          '<p class="text-sm text-gray-500">👤 ' + (c.pet_owner_name || 'Propietario no especificado') + '</p>' +
           (c.reason ? '<p class="text-xs text-gray-400 mt-1">📋 ' + c.reason + '</p>' : '') +
         '</div>' +
         '<div class="flex flex-col items-end gap-1">' +
@@ -1024,7 +1024,7 @@ window.filtrarEspecialistas = function() {
           .addTo(_mapInstance)
           .bindPopup('<b>' + (e.full_name || 'Especialista') + '</b><br>' +
             (e.specialty || '') + '<br>' +
-            formatCOP(e.price_per_consultation) + '<br>' +
+            formatCOP(e.hourly_rate) + '<br>' +
             '<button onclick="abrirSolicitarCita(\'' + e.id + '\')" style="background:#0ea5e9;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin-top:4px;">Solicitar cita</button>');
         _userMapMarkers.push(marker);
       }
@@ -1049,9 +1049,9 @@ window.filtrarEspecialistas = function() {
             '</div>' +
           '</div>' +
           '<div class="flex flex-wrap gap-2 mt-2">' +
-            '<span class="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-lg">💰 ' + formatCOP(e.price_per_consultation) + '</span>' +
-            (e.years_experience ? '<span class="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded-lg">🎓 ' + e.years_experience + ' años exp.</span>' : '') +
-            (e.available_24h ? '<span class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg">🌙 24/7</span>' : '') +
+            '<span class="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-lg">💰 ' + formatCOP(e.hourly_rate) + '</span>' +
+            (e.years_of_experience ? '<span class="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded-lg">🎓 ' + e.years_of_experience + ' años exp.</span>' : '') +
+            (e.available_24_7 ? '<span class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg">🌙 24/7</span>' : '') +
             '<span class="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded-lg">📍 ' + (e._dist < 999 ? e._dist.toFixed(1) + ' km' : 'N/A') + '</span>' +
           '</div>' +
         '</div>' +
@@ -1123,7 +1123,7 @@ window.crearCita = async function() {
   var petAge = document.getElementById('cita-pet-age').value;
   var petWeight = document.getElementById('cita-pet-weight').value;
   var ownerName = document.getElementById('cita-owner-name').value.trim();
-  var ownerPhone = document.getElementById('cita-owner-phone').value.trim();
+  var petOwnerPhone = document.getElementById('cita-owner-phone').value.trim();
   var reason = document.getElementById('cita-reason').value.trim();
   var notes = document.getElementById('cita-notes').value.trim();
   var datetimeVal = document.getElementById('cita-datetime').value;
@@ -1149,12 +1149,12 @@ window.crearCita = async function() {
     pet_name: petName,
     pet_species: petSpecies,
     pet_breed: petBreed || null,
-    pet_age: petAge ? parseFloat(petAge) : null,
-    pet_weight: petWeight ? parseFloat(petWeight) : null,
-    owner_name: ownerName,
-    owner_phone: ownerPhone || null,
+    pet_age_years: petAge ? parseFloat(petAge) : null,
+    pet_weight_kg: petWeight ? parseFloat(petWeight) : null,
+    pet_owner_name: ownerName,
+    pet_owner_phone: petOwnerPhone || null,
     reason: reason,
-    notes: notes || null,
+    clinical_notes: notes || null,
     scheduled_at: new Date(datetimeVal).toISOString(),
     status: 'pending',
     payment_status: 'unpaid'
@@ -1274,8 +1274,8 @@ window.verDetalleCita = async function(citaId) {
       '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Especie</p><p class="font-medium text-gray-800">' + (c.pet_species || '—') + '</p></div>' +
       '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Raza</p><p class="font-medium text-gray-800">' + (c.pet_breed || '—') + '</p></div>' +
       '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Edad / Peso</p><p class="font-medium text-gray-800">' + (c.pet_age || '—') + ' años · ' + (c.pet_weight || '—') + ' kg</p></div>' +
-      '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Propietario</p><p class="font-medium text-gray-800">' + (c.owner_name || '—') + '</p></div>' +
-      '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Teléfono</p><p class="font-medium text-gray-800">' + (c.owner_phone || '—') + '</p></div>' +
+      '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Propietario</p><p class="font-medium text-gray-800">' + (c.pet_owner_name || '—') + '</p></div>' +
+      '<div class="bg-gray-50 rounded-lg p-3"><p class="text-xs text-gray-400 mb-1">Teléfono</p><p class="font-medium text-gray-800">' + (c.pet_owner_phone || '—') + '</p></div>' +
       '<div class="bg-gray-50 rounded-lg p-3 col-span-2"><p class="text-xs text-gray-400 mb-1">Fecha y hora</p><p class="font-medium text-gray-800">📅 ' + formatFecha(c.scheduled_at) + '</p></div>' +
       '<div class="bg-gray-50 rounded-lg p-3 col-span-2"><p class="text-xs text-gray-400 mb-1">Motivo</p><p class="font-medium text-gray-800">' + (c.reason || '—') + '</p></div>' +
       (c.notes ? '<div class="bg-gray-50 rounded-lg p-3 col-span-2"><p class="text-xs text-gray-400 mb-1">Notas</p><p class="font-medium text-gray-800">' + c.notes + '</p></div>' : '') +
@@ -1402,7 +1402,7 @@ async function cargarSolicitudes() {
           '<p class="text-sm text-gray-500">📅 ' + formatFecha(c.scheduled_at) + '</p>' +
           (c.clinic_profiles ? '<p class="text-sm text-gray-500">🏥 ' + c.clinic_profiles.clinic_name + '</p>' : '') +
           '<p class="text-sm text-gray-500">📋 ' + (c.reason || '') + '</p>' +
-          '<p class="text-sm text-gray-500">👤 ' + (c.owner_name || '') + '</p>' +
+          '<p class="text-sm text-gray-500">👤 ' + (c.pet_owner_name || '') + '</p>' +
         '</div>' +
         '<div class="flex gap-2 flex-wrap">' +
           '<button class="btn-success text-sm" onclick="aceptarCita(\'' + c.id + '\')">✅ Aceptar</button>' +
@@ -1537,32 +1537,34 @@ async function cargarPerfilEspecialista() {
   if (!data) return;
   var f = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
   f('perfil-esp-nombre', data.full_name);
-  f('perfil-esp-especialidad', data.specialty);
-  f('perfil-esp-precio', data.price_per_consultation);
-  f('perfil-esp-telefono', data.phone);
-  f('perfil-esp-experiencia', data.years_experience);
+  // specialties es un array, convertirlo a texto
+  var specialtiesText = Array.isArray(data.specialties) ? data.specialties.join(', ') : (data.specialties || '');
+  f('perfil-esp-especialidad', specialtiesText);
+  f('perfil-esp-precio', data.hourly_rate);
+  f('perfil-esp-experiencia', data.years_of_experience);
   var h24 = document.getElementById('perfil-esp-24h');
   var acep = document.getElementById('perfil-esp-aceptando');
-  if (h24) h24.checked = !!data.available_24h;
+  if (h24) h24.checked = !!data.available_24_7;
   if (acep) acep.checked = !!data.is_accepting_requests;
 }
 
 window.guardarPerfilEspecialista = async function() {
   if (!currentSpecialistId) { showToast('Sin perfil de especialista', 'error'); return; }
+  var nombreCompleto = document.getElementById('perfil-esp-nombre').value;
+  var specialtiesText = document.getElementById('perfil-esp-especialidad').value;
+  var specialtiesArray = specialtiesText.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
   var updates = {
-    full_name: document.getElementById('perfil-esp-nombre').value,
-    specialty: document.getElementById('perfil-esp-especialidad').value,
-    price_per_consultation: parseFloat(document.getElementById('perfil-esp-precio').value) || 0,
-    phone: document.getElementById('perfil-esp-telefono').value,
-    years_experience: parseInt(document.getElementById('perfil-esp-experiencia').value) || 0,
-    available_24h: document.getElementById('perfil-esp-24h').checked,
+    specialties: specialtiesArray,
+    hourly_rate: parseFloat(document.getElementById('perfil-esp-precio').value) || 0,
+    years_of_experience: parseInt(document.getElementById('perfil-esp-experiencia').value) || 0,
+    available_24_7: document.getElementById('perfil-esp-24h').checked,
     is_accepting_requests: document.getElementById('perfil-esp-aceptando').checked
   };
   var { error } = await sbClient.from('specialist_profiles').update(updates).eq('id', currentSpecialistId);
   if (error) { showToast('Error: ' + error.message, 'error'); return; }
-  // Actualizar nombre en users también
-  await sbClient.from('users').update({ full_name: updates.full_name }).eq('id', currentUser.id);
-  showToast('Perfil actualizado', 'success');
+  // Actualizar nombre en users
+  await sbClient.from('users').update({ full_name: nombreCompleto }).eq('id', currentUser.id);
+  showToast('✅ Perfil actualizado correctamente', 'success');
 };
 
 // ============================================================
@@ -1666,8 +1668,8 @@ async function cargarVerificaciones() {
           '<p class="font-semibold text-gray-800">👨‍⚕️ ' + (s.full_name || 'Especialista') + '</p>' +
           (s.users ? '<p class="text-sm text-gray-500">📧 ' + s.users.email + '</p>' : '') +
           '<p class="text-sm text-gray-500">🔬 ' + (s.specialty || '—') + '</p>' +
-          '<p class="text-sm text-gray-500">🎓 ' + (s.years_experience || 0) + ' años de experiencia</p>' +
-          '<p class="text-sm text-gray-500">💰 ' + formatCOP(s.price_per_consultation) + '</p>' +
+          '<p class="text-sm text-gray-500">🎓 ' + (s.years_of_experience || 0) + ' años de experiencia</p>' +
+          '<p class="text-sm text-gray-500">💰 ' + formatCOP(s.hourly_rate) + '</p>' +
         '</div>' +
         '<div class="flex gap-2">' +
           '<button class="btn-success text-sm" onclick="verificarEspecialista(\'' + s.id + '\',true)">✅ Aprobar</button>' +
@@ -1724,7 +1726,7 @@ function cargarMapaGlobal() {
           .addTo(_mapGlobalInstance)
           .bindPopup('<b>👨‍⚕️ ' + (e.full_name || 'Especialista') + '</b><br>' +
             (e.specialty || '') + '<br>' +
-            formatCOP(e.price_per_consultation));
+            formatCOP(e.hourly_rate));
       }
     });
 

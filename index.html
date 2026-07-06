@@ -247,22 +247,22 @@
   <div id="tab-content-especialista-inicio" class="tab-content active main-content">
     <h2 class="text-xl font-bold text-gray-800 mb-4">Bienvenido, <span id="especialista-nombre"></span></h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 grid-kpi">
-      <div class="kpi-card">
+      <div class="kpi-card" style="cursor:pointer" onclick="filtrarCitasEspecialista('all')">
         <div class="text-2xl mb-1">📅</div>
         <div class="text-2xl font-bold text-sky-500" id="kpi-esp-total">0</div>
         <div class="text-xs text-gray-500 mt-1">Citas este mes</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" style="cursor:pointer" onclick="filtrarCitasEspecialista('completed')">
         <div class="text-2xl mb-1">✅</div>
         <div class="text-2xl font-bold text-emerald-500" id="kpi-esp-completadas">0</div>
         <div class="text-xs text-gray-500 mt-1">Completadas</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" style="cursor:pointer" onclick="filtrarCitasEspecialista('pending')">
         <div class="text-2xl mb-1">⏳</div>
         <div class="text-2xl font-bold text-yellow-500" id="kpi-esp-pendientes">0</div>
         <div class="text-xs text-gray-500 mt-1">Pendientes</div>
       </div>
-      <div class="kpi-card">
+      <div class="kpi-card" style="cursor:pointer" onclick="filtrarCitasEspecialista('confirmed')">
         <div class="text-2xl mb-1">💰</div>
         <div class="text-2xl font-bold text-blue-500" id="kpi-esp-ingresos">$0</div>
         <div class="text-xs text-gray-500 mt-1">Ingresos mes</div>
@@ -1143,6 +1143,8 @@ window.crearCita = async function() {
     return;
   }
 
+  console.log('Creando cita - specialistId:', specialistId, 'clinicId:', currentClinicId);
+  if (!specialistId) { showToast('Error: no se seleccionó especialista', 'error'); return; }
   var insertData = {
     clinic_id: currentClinicId,
     specialist_id: specialistId,
@@ -1356,6 +1358,7 @@ async function cargarInicioEspecialista() {
   var ingresos = citas.filter(function(c) { return c.status === 'completed'; })
     .reduce(function(acc, c) { return acc + (c.amount || 0); }, 0);
 
+  window._espCitas = citas;
   document.getElementById('kpi-esp-total').textContent = total;
   document.getElementById('kpi-esp-completadas').textContent = completadas;
   document.getElementById('kpi-esp-pendientes').textContent = pendientes;
@@ -1381,14 +1384,47 @@ async function cargarInicioEspecialista() {
   }).join('');
 }
 
+window.filtrarCitasEspecialista = function(estado) {
+  var citas = window._espCitas || [];
+  var filtradas = citas;
+  var titulo = 'Todas las citas';
+  if (estado === 'pending') { filtradas = citas.filter(function(c) { return c.status === 'pending'; }); titulo = 'Citas pendientes'; }
+  else if (estado === 'confirmed') { filtradas = citas.filter(function(c) { return c.status === 'confirmed'; }); titulo = 'Citas confirmadas'; }
+  else if (estado === 'completed') { filtradas = citas.filter(function(c) { return c.status === 'completed'; }); titulo = 'Citas completadas'; }
+  
+  var el = document.getElementById('especialista-proximas-citas');
+  if (!el) return;
+  
+  var headers = document.querySelectorAll('#tab-content-especialista-inicio h3');
+  headers.forEach(function(h) { h.textContent = titulo + ' (' + filtradas.length + ')'; });
+  
+  if (filtradas.length === 0) {
+    el.innerHTML = '<p style="color:#6b7280;font-size:14px;">No hay citas en esta categoría.</p>';
+  } else {
+    el.innerHTML = filtradas.map(function(c) {
+      return '<div class="cita-card" style="border-left-color:#0ea5e9">' +
+        '<p class="font-semibold text-gray-800">' + (c.pet_name || 'Mascota') + ' (' + (c.pet_species || '') + ')</p>' +
+        '<p class="text-sm text-gray-500">📅 ' + formatFecha(c.scheduled_at) + '</p>' +
+        '<p class="text-sm text-gray-500">📋 ' + (c.reason || '') + '</p>' +
+        '<p class="text-sm text-gray-500">👤 ' + (c.pet_owner_name || '') + '</p>' +
+        '<p class="text-sm font-bold text-emerald-600">💰 ' + formatCOP(c.total_price) + '</p>' +
+      '</div>';
+    }).join('');
+  }
+  showToast('📋 Mostrando ' + filtradas.length + ' cita(s)', 'info');
+};
+
 async function cargarSolicitudes() {
-  if (!currentSpecialistId) { document.getElementById('especialista-solicitudes-lista').innerHTML = '<p class="text-gray-400 text-sm">Sin perfil.</p>'; return; }
-  var { data } = await sbClient.from('appointments')
+  console.log('cargarSolicitudes - currentSpecialistId:', currentSpecialistId);
+  if (!currentSpecialistId) { document.getElementById('especialista-solicitudes-lista').innerHTML = '<p class="text-gray-400 text-sm">Sin perfil de especialista. CurrentSpecialistId es null.</p>'; return; }
+  var { data, error } = await sbClient.from('appointments')
     .select('*, clinic_profiles(clinic_name, phone)')
     .eq('specialist_id', currentSpecialistId)
     .eq('status', 'pending')
     .order('scheduled_at', { ascending: true });
 
+  console.log('Solicitudes encontradas:', data ? data.length : 0, 'Error:', error);
+  if (error) console.error('Error en cargarSolicitudes:', error);
   var el = document.getElementById('especialista-solicitudes-lista');
   if (!data || !data.length) {
     el.innerHTML = '<div class="bg-white rounded-xl p-6 text-center text-gray-400 shadow"><div class="text-3xl mb-2">📭</div><p>Sin solicitudes pendientes</p></div>';

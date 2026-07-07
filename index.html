@@ -1418,7 +1418,7 @@ async function cargarSolicitudes() {
   console.log('cargarSolicitudes - currentSpecialistId:', currentSpecialistId);
   if (!currentSpecialistId) { document.getElementById('especialista-solicitudes-lista').innerHTML = '<p class="text-gray-400 text-sm">Sin perfil de especialista. CurrentSpecialistId es null.</p>'; return; }
   var { data, error } = await sbClient.from('appointments')
-    .select('*, clinic_profiles(clinic_name, phone)')
+    .select('*, clinic_profiles(clinic_name)')
     .eq('specialist_id', currentSpecialistId)
     .eq('status', 'pending')
     .order('scheduled_at', { ascending: true });
